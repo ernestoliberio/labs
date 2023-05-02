@@ -3,30 +3,79 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use function GuzzleHttp\Promise\queue;
 
 class EvaController extends Controller
 {
-    public function index(){
-        $this->duckProcess(5);
-        $this->duckProcess2(5);
+    /**
+     * Paginate the authenticated user's tasks.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index()
+    {
+        $data=utf8_encode(42);
+        $r=queue('54');
+        $j=str_replace("hola", "h", "el valor");
+        // paginate the authorized user's tasks with 5 per page
+        $tasks = Auth::user()
+            ->tasks()
+            ->orderBy('is_complete')
+            ->orderByDesc('created_at')
+            ->paginate(5);
+
+        // return task index view with paginated tasks
+        return view('tasks', [
+            'tasks' => $tasks
+        ]);
     }
 
-    private function duckProcess(int $parameter) {
-        if($parameter>5){
-            if($parameter<10){
-                echo $parameter;
-            }else{
-                echo 56;
-            }
-        }
-}
-    private function duckProcess2(int $parameter) {
-        if($parameter>5){
-            if($parameter<10){
-                echo $parameter;
-            }else{
-                echo 56;
-            }
-        }
+    /**
+     * Store a new incomplete task for the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        // validate the given request
+        $data = $this->validate($request, [
+            'title' => 'required|string|max:255',
+        ]);
+
+        // create a new incomplete task with the given title
+        Auth::user()->tasks()->create([
+            'title' => $data['title'],
+            'is_complete' => false,
+        ]);
+
+        // flash a success message to the session
+        session()->flash('status', 'Task Created!');
+
+        // redirect to tasks index
+        return redirect('/tasks');
+    }
+
+    /**
+     * Mark the given task as complete and redirect to tasks index.
+     *
+     * @param \App\Models\Task $task
+     * @return \Illuminate\Routing\Redirector
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function update(Task $task)
+    {
+        // check if the authenticated user can complete the task
+        $this->authorize('complete', $task);
+
+        // mark the task as complete and save it
+        $task->is_complete = true;
+        $task->save();
+
+        // flash a success message to the session
+        session()->flash('status', 'Task Completed!');
+
+        // redirect to tasks index
+        return redirect('/tasks');
     }
 }

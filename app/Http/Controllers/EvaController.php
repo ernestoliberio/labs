@@ -15,8 +15,8 @@ class EvaController extends Controller
     public function index()
     {
         $data = utf8_encode(42);
-        $r = queue('54');
-        $j = str_replace("hola", "h", "el valor");
+        $testInline = queue('54');
+        $pr = str_replace("hola", "h", "el valor");
         // paginate the authorized user's tasks with 5 per page
         $tasks = Auth::user()
             ->tasks()
